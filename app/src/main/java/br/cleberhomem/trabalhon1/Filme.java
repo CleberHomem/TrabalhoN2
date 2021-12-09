@@ -2,7 +2,7 @@ package br.cleberhomem.trabalhon1;
 
 public class Filme {
 
-    public int id;
+    private String id;
 
     public String titulo;
     public String genero;
@@ -21,11 +21,11 @@ public class Filme {
     @Override
     public String toString() {return titulo + "  |  " + genero + " | " + tempo; }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

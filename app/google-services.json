@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "237313034240",
+    "firebase_url": "https://applembretefilme-default-rtdb.firebaseio.com",
+    "project_id": "applembretefilme",
+    "storage_bucket": "applembretefilme.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237313034240:android:1925ef31ffd38efbc0b0e5",
+        "android_client_info": {
+          "package_name": "br.cleberhomem.trabalhon1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "237313034240-kdiheg0l1dc79vtkiuidj1968hjthpcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5FudFNmp1RlB4iCZ9c3DXaT9Cz-VDId0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "237313034240-kdiheg0l1dc79vtkiuidj1968hjthpcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

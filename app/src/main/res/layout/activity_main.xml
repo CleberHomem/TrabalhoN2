@@ -12,6 +12,13 @@
         android:layout_height="wrap_content"
         android:theme="@style/Theme.TrabalhoN1.AppBarOverlay">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black"
+            app:popupTheme="@style/Theme.TrabalhoN1.PopupOverlay"/>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <include layout="@layout/content_main" />
@@ -25,13 +32,6 @@
         android:layout_marginBottom="16dp"
         android:backgroundTint="#00f"
         android:tint="#fff"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:popupTheme="@style/Theme.TrabalhoN1.PopupOverlay" />
+        app:srcCompat="@android:drawable/ic_input_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

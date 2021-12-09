@@ -12,7 +12,6 @@
 
     <string name="TituloFilme">Titulo do Filme...</string>
     <string name="TempoFilme">Duração do Filme...</string>
-    <string name="compartilhar">Compartilhar</string>
     <string-array name="genero">
         <item>Gênero do Filme...</item>
         <item>Comédia</item>

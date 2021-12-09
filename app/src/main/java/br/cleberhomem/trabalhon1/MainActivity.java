@@ -1,30 +1,28 @@
 package br.cleberhomem.trabalhon1;
 
-import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.telephony.SmsManager;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,36 +30,26 @@ public class MainActivity extends AppCompatActivity {
     private ListView lvFilmes;
     private ArrayAdapter adapter;
     private List<Filme> listaDeFilmes;
-    private EditText etNumero, etMensagem;
-    private Button enviar;
+
+    private FirebaseDatabase database;
+    private DatabaseReference reference;
+    private ChildEventListener childEventListener;
+    private Query query;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etNumero = findViewById(R.id.etNumero);
-        etMensagem = findViewById(R.id.etMensagem);
-        enviar = findViewById(R.id.btnEnviar);
-
-        enviar.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View view) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
-                    enviarSMS();
-                } else {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.SEND_SMS}, 100);
-                }
-            }
-        });
-
         lvFilmes = findViewById(R.id.lvFilme);
 
-        carregarFilmes();
+        listaDeFilmes = new ArrayList<>();
+
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, listaDeFilmes);
+
+        lvFilmes.setAdapter(adapter);
 
         FloatingActionButton fab = findViewById(R.id.fab);
-
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -74,10 +62,13 @@ public class MainActivity extends AppCompatActivity {
         lvFilmes.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int idFilme = listaDeFilmes.get(position).getId();
+                Filme filmeSelecionado = listaDeFilmes.get(position);
                 Intent intent = new Intent(MainActivity.this, FormActivity.class);
                 intent.putExtra("acao", "editar");
-                intent.putExtra("idFilme", idFilme);
+                intent.putExtra("idFilme" , filmeSelecionado.getId());
+                intent.putExtra("Titulo" , filmeSelecionado.getTitulo());
+                intent.putExtra("Genero" , filmeSelecionado.getGenero());
+                intent.putExtra("Duração" , filmeSelecionado.getTempo());
                 startActivity(intent);
             }
         });
@@ -89,47 +80,20 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
     }
 
-    private void enviarSMS() {
-        String numero = etNumero.getText().toString().trim();
-        String mensagem = etMensagem.getText().toString().trim();
-
-        if (!numero.equals("") && !mensagem.equals("")) {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(numero, null, mensagem, null, null);
-            Toast.makeText(getApplicationContext(), "Recomendação enviada!", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(getApplicationContext(), "Preencha os campos!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100 && grantResults.length > 0 && grantResults[0]
-                == PackageManager.PERMISSION_GRANTED) {
-            enviarSMS();
-        } else {
-            Toast.makeText(getApplicationContext(), "Permissão negada!", Toast.LENGTH_SHORT).show();
-
-        }
-    }
-
-    private void excluir(int posicao) {
-        Filme prod = listaDeFilmes.get(posicao);
+    private void excluir(int posicao){
+        Filme filme = listaDeFilmes.get( posicao );
         AlertDialog.Builder alerta = new AlertDialog.Builder(this);
         alerta.setTitle("Excluir...");
         alerta.setIcon(android.R.drawable.ic_delete);
-        alerta.setMessage("Confirma a exclusão do Filme " + prod.getTitulo() + "?");
+        alerta.setMessage("Confirma a exclusão do Filme " + filme.getTitulo() +"?");
         alerta.setNeutralButton("Cancelar", null);
 
         alerta.setPositiveButton("SIM", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                FilmeDAO.remover(MainActivity.this, prod.getId());
-                carregarFilmes();
+                reference.child("Filmes").child(filme.getId()).removeValue();
             }
         });
         alerta.show();
@@ -138,22 +102,88 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         carregarFilmes();
     }
 
-    private void carregarFilmes() {
+    private void carregarFilmes(){
+        listaDeFilmes.clear();
 
-        listaDeFilmes = FilmeDAO.getFilme(this);
-        if (listaDeFilmes.size() == 0) {
+        database = FirebaseDatabase.getInstance();
+        reference = database.getReference();
+        query = reference.child("Filmes").orderByChild("titulo");
+
+        childEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Filme filme = new Filme();
+                filme.setId(snapshot.getKey());
+                filme.setTitulo(snapshot.child("titulo").getValue(String.class));
+                filme.setGenero(snapshot.child("genero").getValue(String.class));
+                filme.setTempo(snapshot.child("tempo").getValue(String.class));
+                listaDeFilmes.add(filme);
+                adapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                String idFilme = snapshot.getKey();
+                for (Filme filme:listaDeFilmes) {
+                    if (filme.getId().equals(idFilme)){
+                        filme.setTitulo(snapshot.child("titulo").getValue(String.class));
+                        filme.setGenero(snapshot.child("genero").getValue(String.class));
+                        filme.setTempo(snapshot.child("tempo").getValue(String.class));
+                        adapter.notifyDataSetChanged();
+                        break;
+                    }
+
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+                String idFilme = snapshot.getKey();
+                for (Filme filme:listaDeFilmes) {
+                    if (filme.getId().equals(idFilme)){
+                        listaDeFilmes.remove(filme);
+                        adapter.notifyDataSetChanged();
+                        break;
+                    }
+                    
+                }
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        };
+
+        query.addChildEventListener(childEventListener);
+
+        /*if(listaDeFilmes.size() == 0 ) {
             Filme fake = new Filme("Lista Vazia...", " ", " ");
             listaDeFilmes.add(fake);
             lvFilmes.setEnabled(false);
-        } else {
+        }else{
             lvFilmes.setEnabled(true);
-        }
+        }*/
+    }
 
-        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, listaDeFilmes);
-        lvFilmes.setAdapter(adapter);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        query.removeEventListener(childEventListener);
     }
 
     @Override
@@ -164,18 +194,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        //Handle action bar item clicks here. The action bar will
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        //if (id == R.id.action_settings) {
-        return true;
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
-
-	return super.onOptionsItemSelected(item);
-}
-
 }

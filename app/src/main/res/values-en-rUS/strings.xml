@@ -1,27 +1,14 @@
 <resources>
-    <string name="app_name">TrabalhoN1</string>
-    <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <string name="app_name">ListaFilmes</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-
-    <string name="TituloFilme">Movie Title...</string>
-    <string name="TempoFilme">Movie time...</string>
-    <string-array name="genero">
-        <item>Movie genre...</item>
-        <item>Comedy</item>
+    <!--<string-array name="genero">
+        <item>Gênero do Filme...</item>
+        <item>Comédia</item>
         <item>Drama</item>
-        <item>Epic</item>
-        <item>Thriller</item>
+        <item>Épico</item>
+        <item>Suspense</item>
         <item>Romance</item>
-        <item>Romantic Comedy</item>
+        <item>Comédia Romântica</item>
 
-    </string-array>
-
-
+    </string-array>-->
 </resources>
